@@ -67,6 +67,8 @@ button:disabled{opacity:.5;cursor:default}
       <label>자소서 내용</label>
       <textarea id="resume" placeholder="작성한 자기소개서를 그대로 붙여넣으세요. 문항이 여러 개면 문항별로 나누어 한 번에 하나씩 첨삭받는 것이 정확합니다.&#10;&#10;※ 주민번호·연락처 등 민감한 개인정보는 빼고 입력하세요."></textarea>
       <div class="meta"><span id="cnt">0자 (공백 포함)</span><span id="cnt2"></span></div>
+      <label>접속 코드 (관리자가 설정한 경우에만 입력)</label>
+      <input id="code" type="password" autocomplete="off" placeholder="필요 없으면 비워 두세요">
       <div class="btns">
         <button class="primary" id="go">✨ 전문가 첨삭 받기</button>
         <button class="ghost" id="clear">지우기</button>
@@ -106,58 +108,33 @@ function md(t){
   }
   close();return h;
 }
-function prompt(){
-  const modeTxt={light:"가볍게: 오탈자, 문법, 어색한 문장만 고치고 내용·구조는 유지",normal:"표준: 문장 다듬기 + 문단 구성 개선 + 직무·회사와의 연결 강화",deep:"강하게: 문항 의도에 맞춰 소재 선택과 구조까지 전면 재구성"}[$("mode").value];
-  const lim=parseInt($("limit").value,10);
-  return `당신은 대기업·공공기관 채용 심사 경험이 풍부한 20년 경력 자기소개서 컨설턴트입니다. 아래 자기소개서를 첨삭하세요.
-
-[지원 정보]
-- 회사: ${$("company").value||"미입력"}
-- 직무: ${$("job").value||"미입력(내용에서 유추)"}
-- 지원자 구분: ${$("level").value}
-- 문항: ${$("question").value||"미입력(내용에서 유추)"}
-- 글자 수 제한: ${lim>0?lim+"자(공백 포함). 수정본은 제한의 90~100% 범위로 작성":"없음"}
-- 현재 글자 수: ${$("resume").value.length}자(공백 포함)
-- 첨삭 강도: ${modeTxt}
-
-[원칙]
-- 원문에 없는 경험, 수치, 수상, 직책을 절대 지어내지 말 것. 보강이 필요한 곳은 [여기에 구체적 수치/상황 입력] 처럼 빈칸으로 표시.
-- 문항의 의도에 답하고 있는지, 직무와 회사에 연결되는지, 경험이 STAR(상황-과제-행동-결과) 흐름으로 구체적인지를 기준으로 진단.
-- 두괄식, 한 문장 한 메시지, 추상적 형용사 대신 구체적 행동·결과로.
-- 상투적 표현(예: "어릴 적부터", "성실함이 강점")과 중복·과장 표현을 지적.
-- 마크다운으로 아래 형식을 정확히 따를 것.
-
-[출력 형식]
-## 1. 총평
-(100점 만점 점수, 문항 적합성, 강점 2~3개, 가장 시급한 약점 2~3개)
-## 2. 핵심 개선 포인트
-(최대 6개. 각 항목: ### 제목 / > 원문 / 수정안 / 이유 한 줄)
-## 3. 수정된 자기소개서 (전체)
-(바로 제출 가능한 완성본. 마지막 줄에 "글자 수: 약 N자(공백 포함)" 표기)
-## 4. 보완하면 좋은 정보
-(본인에게 확인해야 할 질문 3~5개 – 구체적 상황, 수치, 본인 역할, 배운 점 등)
-## 5. 예상 면접 질문
-(이 자소서에서 나올 만한 질문 3개)
-
-[자기소개서 원문]
-${$("resume").value}`;
-}
 $("go").onclick=async()=>{
   if($("resume").value.trim().length<50){$("out").innerHTML='<p class="err">자소서 내용을 조금 더 입력해 주세요 (50자 이상).</p>';return;}
-  const sample=await claude.use("sample");
-  if(!sample){$("out").innerHTML='<p class="err">이 환경에서는 AI 첨삭 기능을 사용할 수 없습니다.</p>';return;}
   ctrl=new AbortController();
   $("go").disabled=true;$("stop").disabled=false;$("copy").disabled=true;
   $("out").innerHTML='<div class="empty">전문가가 자소서를 읽고 있습니다…</div>';
+  last="";
   try{
-    const r=await sample(prompt(),{signal:ctrl.signal,cache:false,modelTier:"complex",onText:({text})=>{last=text;$("out").innerHTML=md(text);}});
-    last=r.text;$("out").innerHTML=md(last);
-    if(r.truncated)$("out").innerHTML+='<p class="hint">※ 길이 제한으로 일부가 잘렸을 수 있습니다. 문항별로 나누어 입력해 보세요.</p>';
+    const resp=await fetch("/api/review",{method:"POST",headers:{"Content-Type":"application/json"},signal:ctrl.signal,
+      body:JSON.stringify({company:$("company").value,job:$("job").value,level:$("level").value,limit:$("limit").value,
+        question:$("question").value,mode:$("mode").value,resume:$("resume").value,code:$("code").value})});
+    if(!resp.ok){
+      let msg="오류가 발생했습니다 ("+resp.status+")";
+      try{msg=(await resp.json()).error||msg;}catch(e){}
+      throw new Error(msg);
+    }
+    const reader=resp.body.getReader(),dec=new TextDecoder();
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      last+=dec.decode(value,{stream:true});
+      $("out").innerHTML=md(last);
+    }
+    last+=dec.decode();
+    $("out").innerHTML=md(last);
   }catch(e){
     if(e&&e.name==="AbortError"){}
-    else if(e&&e.code==="rate_limited")$("out").innerHTML+='<p class="err">요청이 많습니다. 잠시 후 다시 시도해 주세요.</p>';
-    else if(e&&e.code==="not_granted")$("out").innerHTML='<p class="err">AI 사용 권한이 허용되지 않았습니다.</p>';
-    else $("out").innerHTML+='<p class="err">오류가 발생했습니다: '+esc((e&&e.message)||"")+'</p>';
+    else $("out").innerHTML=(last?md(last):"")+'<p class="err">'+esc((e&&e.message)||"알 수 없는 오류")+'</p>';
   }
   $("go").disabled=false;$("stop").disabled=true;$("copy").disabled=!last;
 };
