@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 자소서 첨삭 전문가</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1d2433;--sub:#667085;--line:#e4e7ee;--brand:#2f5bea;--brand2:#e9efff;--warn:#c0392b}
+@media(prefers-color-scheme:dark){:root{--bg:#12151c;--card:#1b1f29;--ink:#eef1f7;--sub:#9aa4b5;--line:#2d3342;--brand:#6b8cff;--brand2:#222c4d;--warn:#ff7b6b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;line-height:1.65}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 16px 60px}
+h1{font-size:26px;margin:0 0 4px}
+.lead{color:var(--sub);margin:0 0 22px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.card h2{font-size:16px;margin:0 0 12px}
+label{display:block;font-size:13px;color:var(--sub);margin:12px 0 4px}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+textarea{min-height:300px;resize:vertical}
+textarea.q{min-height:64px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+button{border:0;border-radius:9px;padding:11px 18px;font:inherit;font-weight:600;cursor:pointer}
+.primary{background:var(--brand);color:#fff;flex:1}
+.ghost{background:var(--brand2);color:var(--brand)}
+button:disabled{opacity:.5;cursor:default}
+.meta{font-size:12px;color:var(--sub);margin-top:6px;display:flex;justify-content:space-between}
+.over{color:var(--warn);font-weight:700}
+#out{min-height:200px;font-size:14.5px}
+#out h3{font-size:17px;margin:20px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--brand2)}
+#out h3:first-child{margin-top:0}
+#out h4{font-size:15px;margin:14px 0 4px}
+#out ul{padding-left:20px;margin:6px 0}
+#out blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--brand);background:var(--brand2);border-radius:0 8px 8px 0}
+#out p{margin:6px 0}
+.empty{color:var(--sub);text-align:center;padding:60px 10px}
+.err{color:var(--warn)}
+.hint{font-size:12px;color:var(--sub);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>✍️ AI 자소서 첨삭 전문가</h1>
+  <p class="lead">자기소개서를 붙여넣으면 채용 담당자의 시각으로 진단하고, 글자 수에 맞춰 고친 버전까지 만들어 드립니다.</p>
+  <div class="grid">
+    <div class="card">
+      <h2>① 자소서 입력</h2>
+      <div class="row">
+        <div><label>지원 회사</label><input id="company" placeholder="예: 현대자동차"></div>
+        <div><label>지원 직무</label><input id="job" placeholder="예: 생산관리, 마케팅"></div>
+      </div>
+      <div class="row">
+        <div><label>지원자 구분</label>
+          <select id="level"><option>신입</option><option>인턴</option><option>경력 (1~5년)</option><option>경력 (5년 이상)</option></select></div>
+        <div><label>글자 수 제한 (공백 포함)</label><input id="limit" type="number" min="0" placeholder="예: 1000 (없으면 비움)"></div>
+      </div>
+      <label>자소서 문항</label>
+      <textarea id="question" class="q" placeholder="예: 지원 동기와 입사 후 포부를 서술하시오."></textarea>
+      <label>첨삭 강도</label>
+      <select id="mode">
+        <option value="light">가볍게 – 오탈자·문장 흐름 위주</option>
+        <option value="normal" selected>표준 – 문장 + 구성 + 직무 연결 강화</option>
+        <option value="deep">강하게 – 소재·구조까지 전면 재구성</option>
+      </select>
+      <label>자소서 내용</label>
+      <textarea id="resume" placeholder="작성한 자기소개서를 그대로 붙여넣으세요. 문항이 여러 개면 문항별로 나누어 한 번에 하나씩 첨삭받는 것이 정확합니다.&#10;&#10;※ 주민번호·연락처 등 민감한 개인정보는 빼고 입력하세요."></textarea>
+      <div class="meta"><span id="cnt">0자 (공백 포함)</span><span id="cnt2"></span></div>
+      <div class="btns">
+        <button class="primary" id="go">✨ 전문가 첨삭 받기</button>
+        <button class="ghost" id="clear">지우기</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>② 첨삭 결과</h2>
+      <div id="out"><div class="empty">왼쪽에 자소서를 입력하고<br>‘전문가 첨삭 받기’를 눌러 주세요.</div></div>
+      <div class="btns"><button class="ghost" id="copy" disabled>결과 복사</button><button class="ghost" id="stop" disabled>중지</button></div>
+      <div class="hint">AI 첨삭은 참고용입니다. 글자 수와 사실관계는 제출 전 직접 한 번 더 확인해 주세요.</div>
+    </div>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let ctrl=null,last="";
+function count(){
+  const n=$("resume").value.length,lim=parseInt($("limit").value,10);
+  $("cnt").textContent=n.toLocaleString()+"자 (공백 포함)";
+  if(lim>0){$("cnt2").innerHTML=n>lim?'<span class="over">제한 '+lim.toLocaleString()+'자 초과 '+(n-lim)+'자</span>':'제한 '+lim.toLocaleString()+'자 · 여유 '+(lim-n)+'자';}
+  else $("cnt2").textContent="";
+}
+$("resume").addEventListener("input",count);$("limit").addEventListener("input",count);
+$("clear").onclick=()=>{$("resume").value="";count();};
+function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function inline(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");}
+function md(t){
+  const lines=t.split("\n");let h="",inUl=false;
+  const close=()=>{if(inUl){h+="</ul>";inUl=false;}};
+  for(const raw of lines){
+    const l=raw.trimEnd();
+    if(/^#{1,3}\s/.test(l)){close();const lv=l.match(/^#+/)[0].length;h+=lv<=2?"<h3>"+inline(l.replace(/^#+\s/,""))+"</h3>":"<h4>"+inline(l.replace(/^#+\s/,""))+"</h4>";}
+    else if(/^\s*[-*•]\s/.test(l)){if(!inUl){h+="<ul>";inUl=true;}h+="<li>"+inline(l.replace(/^\s*[-*•]\s/,""))+"</li>";}
+    else if(/^>\s?/.test(l)){close();h+="<blockquote>"+inline(l.replace(/^>\s?/,""))+"</blockquote>";}
+    else if(l.trim()===""){close();}
+    else{close();h+="<p>"+inline(l)+"</p>";}
+  }
+  close();return h;
+}
+function prompt(){
+  const modeTxt={light:"가볍게: 오탈자, 문법, 어색한 문장만 고치고 내용·구조는 유지",normal:"표준: 문장 다듬기 + 문단 구성 개선 + 직무·회사와의 연결 강화",deep:"강하게: 문항 의도에 맞춰 소재 선택과 구조까지 전면 재구성"}[$("mode").value];
+  const lim=parseInt($("limit").value,10);
+  return `당신은 대기업·공공기관 채용 심사 경험이 풍부한 20년 경력 자기소개서 컨설턴트입니다. 아래 자기소개서를 첨삭하세요.
+
+[지원 정보]
+- 회사: ${$("company").value||"미입력"}
+- 직무: ${$("job").value||"미입력(내용에서 유추)"}
+- 지원자 구분: ${$("level").value}
+- 문항: ${$("question").value||"미입력(내용에서 유추)"}
+- 글자 수 제한: ${lim>0?lim+"자(공백 포함). 수정본은 제한의 90~100% 범위로 작성":"없음"}
+- 현재 글자 수: ${$("resume").value.length}자(공백 포함)
+- 첨삭 강도: ${modeTxt}
+
+[원칙]
+- 원문에 없는 경험, 수치, 수상, 직책을 절대 지어내지 말 것. 보강이 필요한 곳은 [여기에 구체적 수치/상황 입력] 처럼 빈칸으로 표시.
+- 문항의 의도에 답하고 있는지, 직무와 회사에 연결되는지, 경험이 STAR(상황-과제-행동-결과) 흐름으로 구체적인지를 기준으로 진단.
+- 두괄식, 한 문장 한 메시지, 추상적 형용사 대신 구체적 행동·결과로.
+- 상투적 표현(예: "어릴 적부터", "성실함이 강점")과 중복·과장 표현을 지적.
+- 마크다운으로 아래 형식을 정확히 따를 것.
+
+[출력 형식]
+## 1. 총평
+(100점 만점 점수, 문항 적합성, 강점 2~3개, 가장 시급한 약점 2~3개)
+## 2. 핵심 개선 포인트
+(최대 6개. 각 항목: ### 제목 / > 원문 / 수정안 / 이유 한 줄)
+## 3. 수정된 자기소개서 (전체)
+(바로 제출 가능한 완성본. 마지막 줄에 "글자 수: 약 N자(공백 포함)" 표기)
+## 4. 보완하면 좋은 정보
+(본인에게 확인해야 할 질문 3~5개 – 구체적 상황, 수치, 본인 역할, 배운 점 등)
+## 5. 예상 면접 질문
+(이 자소서에서 나올 만한 질문 3개)
+
+[자기소개서 원문]
+${$("resume").value}`;
+}
+$("go").onclick=async()=>{
+  if($("resume").value.trim().length<50){$("out").innerHTML='<p class="err">자소서 내용을 조금 더 입력해 주세요 (50자 이상).</p>';return;}
+  const sample=await claude.use("sample");
+  if(!sample){$("out").innerHTML='<p class="err">이 환경에서는 AI 첨삭 기능을 사용할 수 없습니다.</p>';return;}
+  ctrl=new AbortController();
+  $("go").disabled=true;$("stop").disabled=false;$("copy").disabled=true;
+  $("out").innerHTML='<div class="empty">전문가가 자소서를 읽고 있습니다…</div>';
+  try{
+    const r=await sample(prompt(),{signal:ctrl.signal,cache:false,modelTier:"complex",onText:({text})=>{last=text;$("out").innerHTML=md(text);}});
+    last=r.text;$("out").innerHTML=md(last);
+    if(r.truncated)$("out").innerHTML+='<p class="hint">※ 길이 제한으로 일부가 잘렸을 수 있습니다. 문항별로 나누어 입력해 보세요.</p>';
+  }catch(e){
+    if(e&&e.name==="AbortError"){}
+    else if(e&&e.code==="rate_limited")$("out").innerHTML+='<p class="err">요청이 많습니다. 잠시 후 다시 시도해 주세요.</p>';
+    else if(e&&e.code==="not_granted")$("out").innerHTML='<p class="err">AI 사용 권한이 허용되지 않았습니다.</p>';
+    else $("out").innerHTML+='<p class="err">오류가 발생했습니다: '+esc((e&&e.message)||"")+'</p>';
+  }
+  $("go").disabled=false;$("stop").disabled=true;$("copy").disabled=!last;
+};
+$("stop").onclick=()=>{if(ctrl)ctrl.abort();};
+$("copy").onclick=async()=>{
+  try{await navigator.clipboard.writeText(last);$("copy").textContent="복사됨 ✓";}
+  catch(e){$("copy").textContent="복사 실패 – 직접 선택해 복사하세요";}
+  setTimeout(()=>$("copy").textContent="결과 복사",1800);
+};
+</script>
+</body>
+</html>
